@@ -1,10 +1,10 @@
 FROM node:18-alpine
 
-# Install curl for debugging and bash for convenience
+# Install curl for debugging and bash
 RUN apk add --no-cache curl bash
 
-# Set working directory
-WORKDIR /usr/src/app
+# Set working directory to backend
+WORKDIR /usr/src/app/backend
 
 # Copy package files and install dependencies
 COPY package*.json ./
@@ -19,5 +19,5 @@ RUN npx prisma generate
 # Expose port
 EXPOSE 4000
 
-# Use ts-node to run server.ts directly in backend/
+# Run server.ts using ts-node
 CMD ["npx", "ts-node", "server.ts"]

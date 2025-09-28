@@ -15,8 +15,9 @@ model VideoRequest {
   city        String
   phone       String
   status      String   @default("pending") // pending | generating | sent | failed
-  syncRequest Json?   // store request data to Sync API
-  syncResponse Json?  // store response (urls/ids)
+  syncRequest Json?
+  syncJobId       String?    // store request data to Sync API
+  syncResponse Json?  // store response (urls/ids
   whatsappResponse Json?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

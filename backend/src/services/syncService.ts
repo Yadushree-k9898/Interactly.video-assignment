@@ -9,7 +9,7 @@ function handleResponse(resp: { data: any; status: number; config: any }) {
   return {
     request: resp.config.data,
     response: resp.data,
-    videoUrl: resp.data.video_url || resp.data.url,
+    videoUrl: resp.data.outputUrl,
     videoId: resp.data.id,
   };
 }
@@ -33,6 +33,7 @@ export async function generatePersonalizedVideo({ actorId, name, city, requestId
       { type: 'audio', url: audioUrl }
     ],
     options: { sync_mode: 'loop' },
+     webhookUrl: `${process.env.BASE_URL}/webhooks/synclabs?requestId=${requestId}`
   };
 
   const axiosInstance = axios.create({

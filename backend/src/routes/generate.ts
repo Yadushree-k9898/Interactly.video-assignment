@@ -51,15 +51,19 @@ router.post('/', async (req, res) => {
       name,
       city,
       requestId: rec.id,
+      // syncJobId: syncResult.response?.id,
     });
 
     console.log('SyncLabs request sent:', syncResult.request);
 
     // Step 3: Update DB with initial SyncLabs request info
-    await safeUpdateVideoRequest(rec.id, {
-      syncRequest: syncResult.request,
-      status: 'generating',
-    });
+   await safeUpdateVideoRequest(rec.id, {
+  status: 'generating',
+  syncJobId: syncResult.videoId,
+  syncRequest: syncResult.request,
+  syncResponse: syncResult.response
+});
+
 
     // Respond immediately; actual video sending handled in webhook
     return res.json({ ok: true, id: rec.id });

@@ -4,37 +4,45 @@ import { sendWhatsAppVideo } from '../../services/whatsappService';
 
 const router = express.Router();
 
-// SyncLabs webhook for video completion
 router.post('/synclabs', async (req, res) => {
   const { requestId } = req.query as { requestId: string };
-  const { output_url, id } = req.body; // SyncLabs sends final video URL in `output_url`
+  const { outputUrl, id } = req.body;
 
-  if (!requestId || !output_url) {
+  if (!requestId || !outputUrl) {
     return res.status(400).json({ ok: false, error: 'Missing requestId or video URL' });
   }
 
   try {
-    // Step 1: Update DB with final video URL
+    // Step 1: Save SyncLabs response & mark as generated
     const rec = await prisma.videoRequest.update({
-      where: { id: parseInt(requestId) },
+      where: { id: parseInt(requestId, 10) },
       data: { syncResponse: req.body, status: 'generated' },
     });
 
-    console.log(`Video generated for request ${requestId}: ${output_url}`);
+    console.log(`✅ Video generated for request ${requestId}: ${outputUrl}`);
 
-    // Step 2: Send video via WhatsApp
-    const waRes = await sendWhatsAppVideo(rec.phone, output_url);
+    // Step 2: Try sending via WhatsApp
+    try {
+      const waRes = await sendWhatsAppVideo(rec.phone, outputUrl);
 
-    // Step 3: Update DB with WhatsApp status
-    await prisma.videoRequest.update({
-      where: { id: parseInt(requestId) },
-      data: { whatsappResponse: waRes, status: 'sent' },
-    });
+      await prisma.videoRequest.update({
+        where: { id: rec.id },
+        data: { whatsappResponse: waRes, status: 'sent' },
+      });
 
-    res.status(200).json({ ok: true });
-  } catch (err) {
-    console.error('Error in SyncLabs webhook:', err);
-    res.status(500).json({ ok: false, error: err });
+      console.log(`📲 WhatsApp video sent to ${rec.phone}`);
+    } catch (waErr: any) {
+      console.error('❌ WhatsApp send failed:', waErr);
+      await prisma.videoRequest.update({
+        where: { id: rec.id },
+        data: { whatsappResponse: { error: waErr.message }, status: 'generated' },
+      });
+    }
+
+    return res.status(200).json({ ok: true });
+  } catch (err: any) {
+    console.error('❌ Error in SyncLabs webhook:', err);
+    return res.status(500).json({ ok: false, error: err.message || 'Internal error' });
   }
 });
 

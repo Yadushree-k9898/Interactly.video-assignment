@@ -8,14 +8,22 @@ router.post('/webhooks/whatsapp/status', async (req: Request, res: Response) => 
   const { MessageSid, MessageStatus, To } = req.body;
 
   try {
-    // Find video request by phone or mapping (you can store MessageSid -> requestId if needed)
-    // Example: update status based on MessageStatus
+    // Find video request by phone
     const rec = await prisma.videoRequest.findFirst({ where: { phone: To } });
 
     if (rec) {
+      // Safely cast JSON field to object
+      const existingResponse = (rec.whatsappResponse as Record<string, any>) || {};
+
       await prisma.videoRequest.update({
         where: { id: rec.id },
-        data: { whatsappResponse: { ...(rec.whatsappResponse || {}), status: MessageStatus } },
+        data: {
+          whatsappResponse: {
+            ...existingResponse,
+            status: MessageStatus,
+            sid: MessageSid,
+          },
+        },
       });
     }
 

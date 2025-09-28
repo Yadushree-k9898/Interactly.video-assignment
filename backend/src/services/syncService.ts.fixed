@@ -1,0 +1,139 @@
+import axios, { AxiosError } from 'axios';
+import https from 'https';
+
+// Create a singleton axios instance for Sync API
+const syncApiClient = axios.create({
+  timeout: 120000, // 2 minute timeout
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'Connection': 'close' // Force connection close
+  },
+  httpsAgent: new https.Agent({
+    keepAlive: false,
+    rejectUnauthorized: true,
+    timeout: 120000
+  })
+});
+
+// Add request interceptor for logging
+syncApiClient.interceptors.request.use((config) => {
+  console.log('Sync API Request:', {
+    method: config.method,
+    url: config.url,
+    data: config.data
+  });
+  return config;
+});
+
+// Add response interceptor for logging
+syncApiClient.interceptors.response.use(
+  (response) => {
+    console.log('Sync API Response:', {
+      status: response.status,
+      data: response.data
+    });
+    return response;
+  },
+  (error: AxiosError) => {
+    console.error('Sync API Error:', {
+      message: error.message,
+      code: error.code,
+      response: error.response?.data
+    });
+    return Promise.reject(error);
+  }
+);
+
+interface VideoRequest {
+  actorId: string;
+  name: string;
+  city: string;
+  requestId?: string;
+}
+
+export async function generatePersonalizedVideo(params: VideoRequest) {
+  try {
+    // Verify environment variables
+    if (!process.env.SYNC_API_BASE || !process.env.SYNC_API_KEY) {
+      throw new Error('Missing required environment variables: SYNC_API_BASE or SYNC_API_KEY');
+    }
+
+    // Build the personalized text
+    const text = `Hi ${params.name} from ${params.city}, thanks for checking this out!`;
+
+    // Configure base URL and auth token
+    syncApiClient.defaults.baseURL = process.env.SYNC_API_BASE;
+    syncApiClient.defaults.headers.common['Authorization'] = `Bearer ${process.env.SYNC_API_KEY}`;
+
+    // Build request payload
+    const requestPayload = {
+      actor_id: params.actorId,
+      script: {
+        type: "text",
+        input: text
+      },
+      test: true,
+      aspect_ratio: "16:9"
+    };
+
+    try {
+      console.log('Making request to:', `${process.env.SYNC_API_BASE}/v1/generate`);
+      console.log('With payload:', requestPayload);
+
+      // Try with axios first
+      const resp = await syncApiClient.post('/v1/generate', requestPayload);
+      
+      if (!resp.data) {
+        throw new Error('Empty response from Sync API');
+      }
+
+      return {
+        request: requestPayload,
+        response: resp.data,
+        videoUrl: resp.data.video_url || resp.data.url,
+        videoId: resp.data.id
+      };
+
+    } catch (axiosError) {
+      // If axios fails, try with fetch as fallback
+      console.log('Axios request failed, trying with fetch...');
+      
+      const fetchResp = await fetch(`${process.env.SYNC_API_BASE}/v1/generate`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.SYNC_API_KEY}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Connection': 'close'
+        },
+        body: JSON.stringify(requestPayload)
+      });
+
+      if (!fetchResp.ok) {
+        throw new Error(`HTTP error! status: ${fetchResp.status}`);
+      }
+
+      const data = await fetchResp.json();
+      return {
+        request: requestPayload,
+        response: data,
+        videoUrl: data.video_url || data.url,
+        videoId: data.id
+      };
+    }
+  } catch (error) {
+    // Log and re-throw any errors
+    if (error instanceof AxiosError) {
+      console.error('API Request Failed:', {
+        config: error.config,
+        response: error.response?.data,
+        code: error.code
+      });
+      throw new Error(`Sync API error: ${error.message}`);
+    }
+    
+    console.error('Unexpected error:', error);
+    throw error;
+  }
+}

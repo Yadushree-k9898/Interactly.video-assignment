@@ -1,0 +1,82 @@
+import axios from 'axios';
+
+export async function generatePersonalizedVideo({ actorId, name, city, requestId }: any) {
+  // Build the personalized text and TTS payload
+  const text = `Hi ${name} from ${city}, thanks for checking this out!`;
+
+  try {
+    // Verify environment variables
+    if (!process.env.SYNC_API_BASE || !process.env.SYNC_API_KEY) {
+      throw new Error('Missing required environment variables: SYNC_API_BASE or SYNC_API_KEY');
+    }
+
+    // Build request payload according to Sync API docs
+    const requestPayload = {
+      actor_id: actorId, // Use snake_case as per API docs
+      script: {
+        type: "text",
+        input: text
+      },
+      test: true, // Use test mode while developing
+      aspect_ratio: "16:9"
+    };
+
+    const apiUrl = `${process.env.SYNC_API_BASE}/api/v1/videos`;
+    console.log('Sending request to Sync API:', {
+      url: apiUrl,
+      baseUrl: process.env.SYNC_API_BASE,
+      payload: requestPayload
+    });
+
+    const resp = await axios.post(
+      apiUrl,
+      requestPayload,
+      {
+        headers: { 
+          'Authorization': `Bearer ${process.env.SYNC_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 30000 // 30 second timeout
+      }
+    );
+
+    console.log('Sync API Response:', {
+      status: resp.status,
+      data: resp.data
+    });
+
+    if (!resp.data) {
+      throw new Error('Empty response from Sync API');
+    }
+
+    // The API returns a video ID and status information
+    return {
+      request: requestPayload,
+      response: resp.data,
+      videoUrl: resp.data.video_url || resp.data.url,
+      videoId: resp.data.id
+    };
+
+  } catch (error: any) {
+    if (error.response) {
+      // The request was made and the server responded with a status code outside 2xx
+      console.error('Sync API Error Response:', {
+        status: error.response.status,
+        data: error.response.data,
+        headers: error.response.headers
+      });
+      throw new Error(`Sync API error: ${JSON.stringify(error.response.data)}`);
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error('Sync API No Response:', {
+        request: error.request,
+        config: error.config
+      });
+      throw new Error('No response received from Sync API');
+    } else {
+      // Something happened in setting up the request
+      console.error('Sync API Request Setup Error:', error.message);
+      throw error;
+    }
+  }
+}

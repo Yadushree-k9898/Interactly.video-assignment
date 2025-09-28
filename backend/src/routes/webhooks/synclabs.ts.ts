@@ -14,7 +14,7 @@ router.post('/synclabs', async (req, res) => {
   }
 
   try {
-    // Update DB with final video URL
+    // Step 1: Update DB with final video URL
     const rec = await prisma.videoRequest.update({
       where: { id: parseInt(requestId) },
       data: { syncResponse: req.body, status: 'generated' },
@@ -22,10 +22,10 @@ router.post('/synclabs', async (req, res) => {
 
     console.log(`Video generated for request ${requestId}: ${output_url}`);
 
-    // Send video via WhatsApp
+    // Step 2: Send video via WhatsApp
     const waRes = await sendWhatsAppVideo(rec.phone, output_url);
 
-    // Update DB with WhatsApp status
+    // Step 3: Update DB with WhatsApp status
     await prisma.videoRequest.update({
       where: { id: parseInt(requestId) },
       data: { whatsappResponse: waRes, status: 'sent' },

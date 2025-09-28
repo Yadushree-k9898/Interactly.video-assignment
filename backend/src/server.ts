@@ -3,8 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import generateRouter from './routes/generate';
 import synclabsWebhook from './routes/webhooks/synclabs.ts';
-import whatsappWebhook from './routes/webhooks/synclabs.ts';
-
+import whatsappWebhook from './routes/webhooks/whatsapp';
 
 dotenv.config();
 
@@ -29,8 +28,8 @@ app.get('/api/test', (req, res) => res.json({ ok: true, message: 'API working' }
 
 // Mount routers
 app.use('/api/generate', generateRouter);
-app.use('/api/webhooks', synclabsWebhook);
-app.use('/api/webhooks', whatsappWebhook);
+app.use('/api/webhooks/synclabs', synclabsWebhook);
+app.use('/api/webhooks/whatsapp', whatsappWebhook);
 
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok' }));

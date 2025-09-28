@@ -13,6 +13,20 @@ router.get('/test', (req, res) => {
   res.json({ ok: true, message: 'Generate router test is working' });
 });
 
+// Helper: Neon/Postgres-safe DB update
+async function safeUpdateVideoRequest(id: string, data: any) {
+  try {
+    return await prisma.videoRequest.update({ where: { id }, data });
+  } catch (err: any) {
+    if (err.code === 'E57P01') { // Neon disconnected
+      console.warn('Connection terminated, reconnecting...');
+      await prisma.$connect();
+      return await prisma.videoRequest.update({ where: { id }, data });
+    }
+    throw err;
+  }
+}
+
 // Create video request and trigger SyncLabs
 router.post('/', async (req, res) => {
   console.log('POST /api/generate hit:', req.body);
@@ -26,12 +40,12 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ ok: false, error: 'Missing required fields' });
     }
 
-    // Create video request in DB
+    // Step 1: Create video request in DB
     rec = await prisma.videoRequest.create({
       data: { actorId, name, city, phone, status: 'pending' },
     });
 
-    // Trigger SyncLabs video generation (async)
+    // Step 2: Trigger SyncLabs video generation
     const syncResult = await generatePersonalizedVideo({
       actorId,
       name,
@@ -41,25 +55,33 @@ router.post('/', async (req, res) => {
 
     console.log('SyncLabs request sent:', syncResult.request);
 
-    // Update DB with initial SyncLabs request
-    await prisma.videoRequest.update({
-      where: { id: rec.id },
-      data: { syncRequest: syncResult.request, status: 'generating' },
+    // Step 3: Update DB with initial SyncLabs request info
+    await safeUpdateVideoRequest(rec.id, {
+      syncRequest: syncResult.request,
+      status: 'generating',
     });
 
-    // Respond immediately; actual video + WhatsApp sending will be handled via webhook
+    // Respond immediately; actual video sending handled in webhook
     return res.json({ ok: true, id: rec.id });
+
   } catch (err: any) {
     console.error('Error in generate endpoint:', err);
 
     if (rec) {
-      await prisma.videoRequest.update({
-        where: { id: rec.id },
-        data: { status: 'failed', syncResponse: err.response?.data || { error: err.message } },
-      });
+      try {
+        await safeUpdateVideoRequest(rec.id, {
+          status: 'failed',
+          syncResponse: err.response?.data || { error: err.message },
+        });
+      } catch (updateErr) {
+        console.error('Failed to update videoRequest after error:', updateErr);
+      }
     }
 
-    return res.status(500).json({ ok: false, error: err.message || 'Failed to generate video' });
+    return res.status(500).json({
+      ok: false,
+      error: err.message || 'Failed to generate video',
+    });
   }
 });
 

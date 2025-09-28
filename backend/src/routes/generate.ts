@@ -14,7 +14,7 @@ router.get('/test', (req, res) => {
 });
 
 // Helper: Neon/Postgres-safe DB update
-async function safeUpdateVideoRequest(id: number, data: any) {   // 🔥 FIXED: id is number
+async function safeUpdateVideoRequest(id: string, data: any) {
   try {
     return await prisma.videoRequest.update({ where: { id }, data });
   } catch (err: any) {
@@ -51,17 +51,19 @@ router.post('/', async (req, res) => {
       name,
       city,
       requestId: rec.id,
+      // syncJobId: syncResult.response?.id,
     });
 
     console.log('SyncLabs request sent:', syncResult.request);
 
     // Step 3: Update DB with initial SyncLabs request info
-    await safeUpdateVideoRequest(rec.id, {   // 🔥 rec.id is number, matches now
-      status: 'generating',
-      syncJobId: syncResult.videoId,
-      syncRequest: syncResult.request,
-      syncResponse: syncResult.response
-    });
+   await safeUpdateVideoRequest(rec.id, {
+  status: 'generating',
+  syncJobId: syncResult.videoId,
+  syncRequest: syncResult.request,
+  syncResponse: syncResult.response
+});
+
 
     // Respond immediately; actual video sending handled in webhook
     return res.json({ ok: true, id: rec.id });
@@ -71,7 +73,7 @@ router.post('/', async (req, res) => {
 
     if (rec) {
       try {
-        await safeUpdateVideoRequest(rec.id, {   // 🔥 fixed type match
+        await safeUpdateVideoRequest(rec.id, {
           status: 'failed',
           syncResponse: err.response?.data || { error: err.message },
         });

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 
 export default function Home() {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+
   const [form, setForm] = useState({
     name: '',
     city: '',
@@ -20,7 +22,7 @@ export default function Home() {
     setVideoUrl(null);
 
     try {
-      const response = await fetch('http://localhost:4000/api/generate', {
+      const response = await fetch(`${API_URL}/api/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -53,7 +55,7 @@ export default function Home() {
 
     const interval = setInterval(async () => {
       try {
-        const resp = await fetch(`http://localhost:4000/api/video-status/${requestId}`);
+        const resp = await fetch(`${API_URL}/api/video-status/${requestId}`);
         if (!resp.ok) throw new Error('Failed to fetch video status');
         const data = await resp.json();
 
@@ -72,7 +74,7 @@ export default function Home() {
     }, 10000); // check every 10 seconds
 
     return () => clearInterval(interval);
-  }, [requestId]);
+  }, [requestId, API_URL]);
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

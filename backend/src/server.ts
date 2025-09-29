@@ -2,8 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import generateRouter from './routes/generate';
-import synclabsWebhook from './routes/webhooks/synclabs.ts';
-import whatsappWebhook from './routes/webhooks/whatsapp';
+import synclabsWebhook from './routes/webhooks/synclabs'; // removed .ts extension
+import whatsappWebhook from './routes/webhooks/whatsapp';  // ensure this file exists
+import videoStatusRouter from './routes/videoStatus';
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.get('/api/test', (req, res) => res.json({ ok: true, message: 'API working' }
 app.use('/api/generate', generateRouter);
 app.use('/api/webhooks/synclabs', synclabsWebhook);
 app.use('/api/webhooks/whatsapp', whatsappWebhook);
+app.use('/api/video-status', videoStatusRouter);
 
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok' }));

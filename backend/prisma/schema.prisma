@@ -9,16 +9,17 @@ datasource db {
 }
 
 model VideoRequest {
-  id          Int      @id @default(autoincrement())
-  actorId     String
-  name        String
-  city        String
-  phone       String
-  status      String   @default("pending") // pending | generating | sent | failed
-  syncRequest Json?
-  syncJobId       String?    // store request data to Sync API
-  syncResponse Json?  // store response (urls/ids
+  id               Int      @id @default(autoincrement())
+  actorId          String
+  name             String
+  city             String
+  phone            String
+  status           String   @default("pending") // pending | generating | sent | failed | generated | timeout
+  syncRequest      Json?
+  syncJobId        String?    // job ID from SyncLabs
+  syncResponse     Json?      // full API response
   whatsappResponse Json?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  videoUrl         String?    // ✅ NEW: final video download/streaming URL
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }

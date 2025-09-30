@@ -11,7 +11,7 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm ci
 
-# Copy frontend code
+# Copy the rest of the frontend code
 COPY . .
 
 # Expose frontend port

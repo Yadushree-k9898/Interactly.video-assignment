@@ -17,7 +17,7 @@ COPY . .
 # Generate Prisma client
 RUN npx prisma generate
 
-# Build TypeScript to dist/
+# Build TypeScript
 RUN npm run build
 
 # Expose backend port

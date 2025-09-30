@@ -118,3 +118,10 @@ dist
 .pnp.*
 
 # End of https://mrkandreev.name/snippets/gitignore-generator/#Node
+
+
+node_modules
+dist
+.env
+.DS_Store
+.git

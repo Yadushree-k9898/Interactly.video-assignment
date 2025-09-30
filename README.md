@@ -15,6 +15,7 @@ This project is an assignment/demo showcasing the integration of AI video genera
 * [Setup & Installation](#setup--installation)
 * [How it Works](#how-it-works)
 * [Screenshots / Proof of Work](#screenshots--proof-of-work)
+* [Prompt History / AI Assistance](#prompt-history--ai-assistance)
 * [Future Enhancements](#future-enhancements)
 * [Credits](#credits)
 
@@ -83,7 +84,7 @@ backend/
 │  ├─ routes/
 │  │  ├─ generate.ts           # Main API endpoint to create video
 │  │  ├─ videoStatus.ts        # Check status of video job
-│  │  └─ webhooks/             # (Optional) webhooks for syncLabs / WhatsApp
+│  │  └─ webhooks/             # (Optional) webhooks for SyncLabs / WhatsApp
 │  ├─ services/
 │  │  ├─ syncService.ts        # Calls SyncLabs API for video generation
 │  │  ├─ elevenLabsService.ts  # Generates audio from text
@@ -179,6 +180,51 @@ Send `join <code>` to the Twilio sandbox number from your WhatsApp to receive me
 
 ---
 
+## Prompt History / AI Assistance
+
+During development of the Personalized Video & WhatsApp Delivery project, AI (ChatGPT / GPT-5 Mini) was used for:
+
+1. **Backend Implementation**
+
+   * Guidance on structuring Express.js + TypeScript server.
+   * Helped implement **SyncLabs API integration** for video generation.
+   * Assisted with **Prisma ORM** queries for storing video requests and responses.
+   * Debugged **polling and webhook logic** to track video status.
+
+2. **Frontend Implementation**
+
+   * Suggested **React + Next.js form design** for user input (Name, City, Phone, Actor selection).
+   * Implemented **polling UI** to check video generation status and display video once ready.
+   * Guidance on **conditional rendering** for success/error messages.
+
+3. **WhatsApp Integration**
+
+   * Helped integrate **Twilio WhatsApp API** to send generated video to user’s phone.
+   * Debugged issues related to **sandbox numbers**, message delivery, and error handling.
+
+4. **Docker & Deployment**
+
+   * Created **Dockerfiles** for frontend and backend.
+   * Suggested a **docker-compose.yml** setup for running Postgres, backend, and frontend together.
+   * Guided in **environment variable management** for local development.
+
+5. **General Debugging**
+
+   * Resolved issues like:
+
+     * Video URL not appearing on UI.
+     * Polling intervals and timing for video generation.
+     * Prisma connection errors.
+     * WhatsApp delivery failures.
+
+6. **Code Optimization & Cleanup**
+
+   * Recommended removing redundant files.
+   * Suggested better folder structure (`services`, `routes`, `webhooks`) for maintainability.
+   * Provided improved server file without unnecessary webhooks for testing.
+
+---
+
 ## Future Enhancements
 
 * Support multiple actors and dynamic scripts.
@@ -194,4 +240,5 @@ Send `join <code>` to the Twilio sandbox number from your WhatsApp to receive me
 * **ElevenLabs** – Text-to-speech
 * **Cloudinary** – Media storage
 * **Twilio** – WhatsApp messaging
+
 
